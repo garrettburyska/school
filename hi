@@ -1,0 +1,54 @@
+const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+
+function saveEvents() {
+    const events = {};
+    days.forEach((day) => {
+        events[day] = [];
+        const tasks = document.getElementById(day).getElementsByTagName('div');
+        for (const task of tasks) {
+            events[day].push(task.id); // would use task.innerText but that includes the bullet
+        }
+    });
+
+    fetch('storeEvents.php', { // use fetch to send data
+        method: 'POST',
+        body: JSON.stringify(events),
+    });
+}
+
+// needs to be async to allow data to load using await
+async function loadEvents() {
+    const response = await fetch('getEvents.php');
+
+    const events = await response.json();
+
+    console.log(events);
+
+    days.forEach((day) => {
+        events[day].forEach((task) => {
+            document.getElementById(day).innerHTML += "<div onclick='modifyTask(\"" + task + "\")' id=\"" + task + "\">• " + task + "</div>";
+        });
+    });
+}
+
+function task(str) {
+    const task = prompt("What do you want to do on " + str + "?");
+    if (task != null && task != "") {
+        document.getElementById(str).innerHTML += "<div onclick='modifyTask(\"" + task + "\")' id=\"" + task + "\">• " + task + "</div>";
+        saveEvents();
+    }
+}
+
+function modifyTask(str) {
+    const task = prompt("Modify task (clear input to delete):", str);
+    if (task != null && task != "") {
+        document.getElementById(str).id = task;
+        document.getElementById(task).innerHTML = "• " + task;
+        document.getElementById(task).setAttribute("onclick", "modifyTask(\"" + task + "\")");
+    } else {
+        document.getElementById(str).remove();
+    }
+    saveEvents();
+}
+
+window.onload = loadEvents;
